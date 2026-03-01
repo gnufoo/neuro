@@ -1,0 +1,44 @@
+[daemon]
+# Network
+listen = "127.0.0.1:3100"
+
+# Timer engine tick interval in ms
+tick_ms = 100
+
+# State directory (WAL, snapshot, outbox)
+state_dir = "./state"
+
+[delivery]
+# Default webhook URL for timer fire events
+default_callback_url = "http://127.0.0.1:18789/hooks/wake"
+
+# Auth token for OpenClaw hooks endpoint
+webhook-token = "46be7a1dc2fd332781efab7eb94c0b1f"
+
+# Webhook timeout in seconds
+timeout_secs = 10
+
+# Retry policy
+retry_attempts = 3
+retry_backoff_ms = [1000, 5000, 30000]
+
+# Outbox file (relative to state_dir)
+outbox_file = "outbox.jsonl"
+
+[persistence]
+# Snapshot triggers
+snapshot_every_ops = 1000
+snapshot_every_secs = 300
+
+[limits]
+# Maximum active timers
+max_timers = 100000
+
+# Maximum payload size in bytes
+max_payload_bytes = 65536
+
+# Maximum tags per timer
+max_tags = 20
+
+# Minimum fire delay in ms
+min_fire_ms = 100
