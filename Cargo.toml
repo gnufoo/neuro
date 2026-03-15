@@ -8,6 +8,10 @@ rust-version = "1.75"
 name = "neuro"
 path = "src/main.rs"
 
+[[bin]]
+name = "neuro-cli"
+path = "src/cli_main.rs"
+
 [lib]
 name = "neuro"
 path = "src/lib.rs"
