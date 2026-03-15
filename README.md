@@ -1,10 +1,12 @@
-# Neuro - Programmable Timer Engine with MCP Interface
+# Neuro - Programmable Timer Engine
 
-A Rust daemon that manages timers with arbitrary payloads, exposed via MCP (Model Context Protocol). Agents schedule, cancel, update, and query timers through standard MCP tool calls. When timers fire, the daemon delivers the payload via HTTP webhook.
+A Rust daemon that manages timers with arbitrary payloads. Agents schedule, cancel, update, and query timers through either the **CLI** or the **MCP** (Model Context Protocol) interface. When timers fire, the daemon delivers the payload via HTTP webhook.
 
 ## Features
 
+- **CLI Client** - Zero context cost for agents. Discover and use timers via `neuro-cli`
 - **MCP Interface** - 7 tools for timer management via JSON-RPC over SSE
+- **Human Durations** - `--in 5m`, `--repeat 1h`, `--in 30s` (CLI)
 - **Persistent State** - WAL (Write-Ahead Log) and snapshots for crash recovery
 - **Webhook Delivery** - Automatic HTTP POST with retry logic and outbox fallback
 - **Priority Queue** - Timers fire in priority order (lower = higher priority)
@@ -13,10 +15,14 @@ A Rust daemon that manages timers with arbitrary payloads, exposed via MCP (Mode
 ## Installation
 
 ```bash
-# Build the release binary
+# Build both binaries
 cargo build --release
 
-# The binary will be at target/release/neuro
+# Daemon: target/release/neuro
+# CLI client: target/release/neuro-cli
+
+# Install CLI globally
+sudo cp target/release/neuro-cli /usr/local/bin/
 ```
 
 ## Configuration
@@ -79,6 +85,62 @@ neuro -c neuro.toml -v
 # Show version
 neuro --version
 ```
+
+## CLI Usage
+
+The CLI client (`neuro-cli`) talks to the running daemon over HTTP. Zero context cost — agents call it on demand instead of loading tool schemas.
+
+```bash
+# List active timers
+neuro-cli ls
+neuro-cli list --tag alerts --limit 10 --json
+
+# Schedule a timer
+neuro-cli schedule --in 5m --payload '{"action":"remind","msg":"standup"}' -t reminder
+neuro-cli schedule --in 1h --repeat 30m --max-fires 10 -t heartbeat -p 10
+neuro-cli schedule --fire-at 2026-03-15T15:00:00Z --payload '{"meeting":"sync"}'
+
+# Get timer details
+neuro-cli get <timer-id>
+neuro-cli get <timer-id> --json
+
+# Update a timer
+neuro-cli update <timer-id> --in 10m                    # reschedule
+neuro-cli update <timer-id> -p 5                         # change priority
+neuro-cli update <timer-id> --tags-add critical,urgent   # add tags
+neuro-cli update <timer-id> --payload-merge '{"key":"val"}'
+
+# Force-fire a timer now
+neuro-cli fire <timer-id>
+
+# Cancel timers
+neuro-cli cancel --id <timer-id>
+neuro-cli cancel --tag reminder
+
+# Daemon stats
+neuro-cli stats
+neuro-cli stats --json
+```
+
+### Duration Format
+
+The CLI accepts human-readable durations:
+
+| Input | Meaning |
+|-------|---------|
+| `30s` | 30 seconds |
+| `5m` | 5 minutes |
+| `1h` | 1 hour |
+| `2d` | 2 days |
+| `500ms` | 500 milliseconds |
+
+### Connecting to a Remote Daemon
+
+```bash
+neuro-cli --url http://192.168.1.100:3100 ls
+```
+
+---
 
 ## MCP Tools
 
